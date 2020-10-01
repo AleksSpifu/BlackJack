@@ -16,6 +16,7 @@ int calculateValueOfHouseCards(std::vector <int>& drawn, std::vector <int>& draw
 
 
 int main() {
+	int moneyPot = 0;
 	int playerMoney = 100;
 	int houseMoney = 100;
 	int deckSize = 52;
@@ -26,10 +27,9 @@ int main() {
 	std::vector <int> drawnCardsValue;
 	std::vector <int> deckOfCards;
 
-	
 	bool gameover = false;
 	bool playerFinished = false;
-	while (playerMoney > 0 && houseMoney > 0) {
+	while (playerMoney > 0 && (houseMoney > 0 || moneyPot > 0)) {
 		playerFinished = false;
 		gameover = false;
 		populateDeckOfCards(deckOfCards, drawnCards, deckSize);
@@ -40,8 +40,13 @@ int main() {
 		lastScore = 0;
 		while (!gameover) {
 			system("cls");
-			std::cout << "Welcome to BlackJack! Press D to draw a new card, S to stop, or Escape to exit.\n";
-			std::cout << "You are currently holding ";
+			std::cout << "Welcome to BlackJack! \n\nPress D to draw a new card, S to stop, or Escape to exit.\n";
+			std::cout << "Press 1 to bet $10, 2 to bet $20 and so on.\n\n";
+			std::cout << "You have $" << playerMoney << " and the house has $" << houseMoney << ". The pot has $" << moneyPot << " in it.\n";
+			if (drawnCards.size() == 0) {
+				std::cout << "There is a $10 fee for starting a game.\n";
+			}
+			std::cout << "\nYou are currently holding ";
 			if (drawnCards.size() > 0) {
 				for (int i = 0; i < drawnCards.size(); i++) {
 					std::cout << printCard(drawnCards[i]);
@@ -54,6 +59,7 @@ int main() {
 				}
 				lastScore = calculateValueOfHeldCards(drawnCards, drawnCardsValue, lastScore);
 				std::cout << "With a combined value of " << lastScore << "\n";
+				
 			}
 			else {
 				std::cout << "no cards.\n";
@@ -62,40 +68,99 @@ int main() {
 				playerFinished = true;
 			}
 			if (!playerFinished) {
+				int betamount = 0;
 				switch (tolower(_getch())) {
 				case 'd':
+					if (lastScore == 0) {
+						playerMoney -= 10;
+					}
 					drawCard(deckOfCards, drawnCards, drawnCardsValue);
+					
 					break;
 				case 's':
 					playerFinished = true;
 					break;
 				case 27:
 					gameover = true;
+					playerMoney = 0;
+					houseMoney = 0;
 					break;
+				case '1':
+					betamount = 1;
+					break;
+				case '2':
+					betamount = 2;
+					break;
+				case '3':
+					betamount = 3;
+					break;
+				case '4':
+					betamount = 4;
+					break;
+				case '5':
+					betamount = 5;
+					break;
+				case '6':
+					betamount = 6;
+					break;
+				case '7':
+					betamount = 7;
+					break;
+				case '8':
+					betamount = 8;
+					break;
+				case '9':
+					betamount = 9;
+					break;
+
 				default:
 					break;
 				}
+				if (betamount > 0) {
+					if (playerMoney >= (betamount * 10) && houseMoney >= (betamount * 10)) {
+						playerMoney -= (betamount * 10);
+						houseMoney -= (betamount * 10);
+						moneyPot += (betamount * 20);
+					}
+					else {
+						std::cout << "\nCan't afford that bet!\n";
+						system("pause");
+					}
+				}
+				
 			}
 			if (playerFinished) {
 				int houseScore = housePlays(deckOfCards, houseDrawnCards, houseDrawnCardsValue, lastScore);
 				if (houseScore > 21 && lastScore > 21) {
-					std::cout << "Both parties lost.";
+					std::cout << "Both parties lost. The money is still in the pot.\n";
 				}
 				else if (houseScore > 21 && lastScore <= 21) {
-					std::cout << "The player wins!";
+					std::cout << "The player wins! You recieve $" << moneyPot;
+					playerMoney += moneyPot;
+					moneyPot = 0;
+					std::cout << " and you now have $" << playerMoney << "!\n";
 				}
 				else if (houseScore <= 21 && lastScore > 21) {
-					std::cout << "The house wins!";
+					houseMoney += moneyPot;
+					moneyPot = 0;
+					std::cout << "The house wins! house has  $" << houseMoney;
+					std::cout << " and you now have $" << playerMoney << "!\n";
 				}
 				else {
 					if (houseScore == lastScore) {
-						std::cout << "It's a draw!";
+						std::cout << "It's a draw! the money is still in the pot.\n";
 					}
 					else if (houseScore < lastScore) {
-						std::cout << "The player wins!";
+						std::cout << "The player wins! You recieve $" << moneyPot;
+						playerMoney += moneyPot;
+						moneyPot = 0;
+						std::cout << " and you now have $" << playerMoney << "!\n";
 					}
 					else if (houseScore > lastScore) {
-						std::cout << "The house wins!";
+						houseMoney += moneyPot;
+						moneyPot = 0;
+						std::cout << "The house wins! house has  $" << houseMoney;
+						std::cout << " and you now have $" << playerMoney << "!\n";
 					}
 				}
 				gameover = true;
@@ -110,7 +175,7 @@ int main() {
 int housePlays(std::vector <int>& deck, std::vector <int>& houseDrawn, std::vector <int>& houseDrawnValue, int playerScore) {
 	int counter = 0;
 	int houseScore = 0;
-	while (houseScore < 18) {
+	while (houseScore < 10) {
 		drawCard(deck, houseDrawn, houseDrawnValue);
 		std::cout << "House draws";
 		for (int i = 0; i < 4; i++) {
@@ -127,19 +192,21 @@ int housePlays(std::vector <int>& deck, std::vector <int>& houseDrawn, std::vect
 		std::cout << " Score: " << houseScore << "\n";
 		counter++;
 	}
-	if (houseScore < playerScore && playerScore != 21 && houseScore < 21) {
+	while (houseScore < playerScore && playerScore <= 21) {
 		drawCard(deck, houseDrawn, houseDrawnValue);
 		std::cout << "House draws";
 		for (int i = 0; i < 4; i++) {
 			Sleep(125);
 			std::cout << ".";
 			Sleep(125);
+
 		}
 
 		std::cout << " " << printCard(houseDrawn[counter]);
 		Sleep(1000);
 		houseScore = calculateValueOfHouseCards(houseDrawn, houseDrawnValue, houseScore);
 		std::cout << " Score: " << houseScore << "\n";
+		counter++;
 	}
 	return houseScore;
 }
@@ -263,7 +330,7 @@ int calculateValueOfHeldCards(std::vector <int>& drawn, std::vector <int>& drawn
 			else if (cardValue == 1 && drawnValue[i] == 0) {
 				std::cout << "So far you have " << lastScore << ". Would you like ";
 				std::cout << printCard(100 * type + cardValue);
-				std::cout << " to count as one or ten?\n1. One\n2. Ten\n";
+				std::cout << " to count as one or ten?\n1. One\n2. Eleven\n";
 				bool acceptedInput = false;
 				while (!acceptedInput) {
 					switch (_getch())
@@ -274,8 +341,8 @@ int calculateValueOfHeldCards(std::vector <int>& drawn, std::vector <int>& drawn
 						acceptedInput = true;
 						break;
 					case '2':
-						totalValue += 10;
-						drawnValue[i] = 10;
+						totalValue += 11;
+						drawnValue[i] = 11;
 						acceptedInput = true;
 						break;
 					default:
@@ -313,10 +380,10 @@ int calculateValueOfHouseCards(std::vector <int>& drawn, std::vector <int>& draw
 				totalValue += 10;
 			}
 			else if (cardValue == 1 && drawnValue[i] == 0) {
-				if (lastScore <= 11) {
-					drawnValue[i] = 10;
+				if (lastScore <= 10) {
+					drawnValue[i] = 11;
 					totalValue += drawnValue[i];
-					std::cout << " House selected 10.";
+					std::cout << " House selected 11.";
 				}
 				else {
 					drawnValue[i] = 1;
