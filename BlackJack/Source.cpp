@@ -1,3 +1,5 @@
+//Written by Aleksander Furnes
+
 #include <iostream>
 #include <string>
 #include <vector>
